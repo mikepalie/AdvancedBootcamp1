@@ -1,0 +1,134 @@
+﻿<input type="text"  value="" id="searchCountry" placeholder="Search By Country" />
+<button id="searchBtn">Search</button>
+
+<div id="spin" class="spinner-border"></div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Country Code</th>
+            <th>Province</th>
+            <th>Domains</th>
+            <th>Web Pages</th>
+        </tr>
+    </thead>
+    <tbody id="monitor">
+    </tbody>
+</table>
+
+<div id="errorText"></div>
+
+<div id="errorText"></div>
+
+
+@section scripts{
+        <div><script>
+
+            $("#spin").hide();
+            $("table").hide();
+            $("#errorText").hide();
+
+
+            $("#searchBtn").click(LoadCountries)
+
+
+
+            function LoadCountries() {
+                $("#monitor").empty();
+                $("#errorText").hide();
+                $("table").hide();
+                $("#spin").show(1000);
+                let RequestCls = {
+                    country : $("#searchCountry").val()
+
+                }
+
+                var settings = {
+                    url: "http://universities.hipolabs.com/search",
+                    method: "GET",
+                    timeout: 0,
+                    data: RequestCls
+                };
+
+                $.ajax(settings).done(function (response) {
+
+                    $("table").show();
+                    $("#spin").hide(1000);
+                    let universities = response;
+                    for (var uni of universities) {
+                        let template = `
+                                        <tr>
+                                            <td>${uni.name}</td>
+                                            <td>${uni.country}</td>
+                                            <td>${uni.alpha_two_code}</td>
+                                            <td>${uni.state_province == null ? "Unknown" : uni.state_province}</td>
+                                            <td>
+                                                <ul>
+                                                    ${uni.domains.map(x => "<li>" + x + "</li>").join("")}
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <ul>
+                                                    ${uni.web_pages.map(x => ` <li><a href=${x} target="_blank">${x}</a></li>`).join("")}
+                                                    
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                    `
+                        let element = $(template);
+
+                        element.click(GetRowData);
+
+                        $("#monitor").append(element);
+                    }
+                }).fail(function (xhr, error) {
+                    $("#spin").hide(1000);
+                    $("#errorText").show();
+                    $("#errorText").text("Something went wrong");
+
+
+                });
+            }
+
+            function GetRowData() {
+
+                let RequestCls = {
+
+                    Name: $(this).find("td").eq(0).text(),
+                    Country: $(this).find("td").eq(1).text(),
+                    Alpha_two_code: $(this).find("td").eq(2).text(),
+                    Province: $(this).find("td").eq(3).text(),
+                    Domains: $(this).find("td").eq(4).find("ul").find("li").map((x, i) => i.innerText).toArray(),
+                    WebPages: $(this).find("td").eq(5).find("ul").find("li").map((x, i) => i.innerText).toArray()
+                }
+
+                //Ajax Technique
+
+                var settings = {
+                    "url": "/University/SaveUni",
+                    "method": "POST",
+                    "timeout": 0,
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "data": JSON.stringify(RequestCls),
+                };
+
+                $.ajax(settings).done(function (response) {
+                    console.log(response);
+                });
+
+            }
+
+
+
+
+        </script></div>
+ }
+
+
+
+
+
