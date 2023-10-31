@@ -1,0 +1,185 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+<form id="categoryform" method="post">
+    <input id="DevName" type="text" name="Name" value="" placeholder="Give developer's name" />
+    <input id="DevSalary" type="number" step="10000" name="Salary" value="" placeholder="Give developer's salary" />
+    <input id="DevBirthday" type="datetime" name="Birthday" value="" placeholder="Give developer's birthday" />
+
+    <input type="submit" value="Create Developer" />
+</form>
+
+<br />
+<br />
+<br />
+<br />
+
+<table class="table" id="datatable">
+    <thead class="bg-danger">
+        <tr>
+            <td>Name</td>
+            <td>Salary</td>
+            <td>Birthday</td>
+            <td>Categories</td>
+        </tr>
+    </thead>
+</table>
+
+
+
+@section scripts{
+
+    <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $.validator.addMethod("dateBeforeNow", function (value, element) {
+                var selectedDate = new Date(value);
+                var currentDate = new Date();
+                return selectedDate < currentDate;
+            }, "The birthdate must be in the past.");
+
+            $.validator.addMethod("SalaryLessThan100k", function (value, element) {
+                return value <= 100000;
+            }, "The Salary must be less than 100000.");
+
+            $("#categoryform").validate(
+                {
+                    rules: {
+                        Name: { required: true },
+                        Salary: { required: true, SalaryLessThan100k: true },
+                        Birthday: { required: true, dateBeforeNow: true }
+                    },
+                    messages: {
+                        Name: "Prepei na doseis onoma",
+                        Salary: "O misthos prepei na einai eos 100000",
+                        Birthday: "H imera genissews prepei na einai sto parelthon!"
+                    },
+                    submitHandler: function (e) {
+                        //Ajax Logic
+                        console.log("hello");
+                        let RequestCls = {
+                            Name: $("#DevName").val(),
+                            Salary: $("#DevSalary").val(),
+                            Birthday: $("#DevBirthday").val()
+                        }
+
+                        let UrlApi = 'https://localhost:44318/Devs/PostDeveloper'
+
+                        $.ajax({
+                            type: "Post",
+                            url: UrlApi,
+                            data: JSON.stringify(RequestCls),
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            success: function (response) {
+                                console.log("geia sou");
+                                
+                                $("#datatable").dataTable().fnDestroy();
+                                loadDevs();
+
+
+                            },
+                            error: function (xhr) {
+                                console.log("xarika");
+                            }
+                        });
+
+
+
+
+
+
+                    }
+                }
+
+            )
+
+        });
+
+    </script>
+
+
+
+
+
+
+
+    <script type="text/javascript">
+
+        loadDevs();
+
+        function loadDevs() {
+
+            $("#datatable").DataTable(
+                {
+                    ajax: {
+                        url: "/Devs/CatchThem",
+                        type: "get",
+                        datatype: "json"
+                    },
+                    columns: [
+                        {
+                            data: "Name", name: "Name"
+
+                        },
+                        {
+                            data: "Salary", name: "Salary", width: "30%"
+                        },
+                        {
+                            data: "Birthday", name: "Birthday", width: "30%", render: function (data) {
+                                // Extract the Unix timestamp from the response
+                                var unixTimestamp = parseInt(data.match(/\/Date\((\d+)\)\//)[1], 10);
+                                // Convert the Unix timestamp to a formatted date
+                                var date = new Date(unixTimestamp);
+                                var formattedDate =
+                                    date.getFullYear() +
+                                    "-" +
+                                    (date.getMonth() + 1).toString().padStart(2, "0") +
+                                    "-" +
+                                    date.getDate().toString().padStart(2, "0");
+                                return formattedDate;
+                            }
+                        },
+                        {
+                            data: "Categories", name: "Categories", width: "40%", render: function (cat) {
+                                let template = `
+                                                        <ul>
+                                                            ${cat.map(x => '<li>' + x.Name + '</li>').join('')}
+                                                        </ul>
+                                                    `
+                                return template;
+                            }
+                        }
+
+                    ],
+                    processing: true,
+                    filters: true,
+
+                    language: {
+                        processing: `<div class="spinner-border text-dark" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>`,
+                        emptyTable: "Den iparxoun data",
+                        zeroRecords: "Den iparxoun devs",
+                        infoFiltered: " - Total number of Devs: _MAX_",
+                        paginate: { first: "Mprosta", last: "Piso", next: "Epomeno", previous: "Proigoumeno" }
+                    },
+                    serverSide: false
+
+                });
+
+
+        }
+
+    </script>
+
+}

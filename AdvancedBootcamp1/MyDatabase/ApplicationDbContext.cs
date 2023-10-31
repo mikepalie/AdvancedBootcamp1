@@ -22,5 +22,11 @@ namespace AdvancedBootcamp1.MyDatabase
         public DbSet<Project> Projects { get; set; }
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Name> Names { get; set; }
+        public DbSet<School> Schools { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<SchoolCategory> SchoolCategories { get; set; }
+        public DbSet<Developer> Developers { get; set; }
+        public DbSet<Category> Categories { get; set; }
+
     }
 }

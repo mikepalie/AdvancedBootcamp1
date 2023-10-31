@@ -1,0 +1,191 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+<form id="categoryform"      method="post">
+    <input id="SchoolName" type="text" name="Name" value="" placeholder="Give schools name" />
+    <input id="SchoolDescription" type="text" name="Description" value="" placeholder="Give schools description" />
+    <input id="SchoolCategoryId" type="number" name="SchoolCategoryId" value="" placeholder="Give schoolCategoryId" />
+
+    <input type="submit" value="Create School" />
+</form>
+
+<br />
+<br />
+<br />
+<br />
+
+
+<table class="table" id="datatable">
+
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Departments</th>
+            <th>School Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+
+
+</table>
+
+
+
+
+@section scripts{
+    <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+
+    <script type="text/javascript">
+
+
+
+        $(document).ready(function () {
+
+            $("#categoryform").validate(
+                {
+                    rules: {
+                        Name: { required: true },
+                        Description: { required: true },
+                        SchoolCategoryId: {required: true }
+                    },
+                    messages: {
+                        Name: "Prepei na doseis onoma",
+                        Description: "Dose description",
+                        SchoolCategoryId: "Dose SchoolCategoryId"
+                    },
+                    submitHandler: function (e) {
+                        //Ajax Logic
+
+                        let RequestCls = {
+                            Name: $("#SchoolName").val(),
+                            Description: $("#SchoolDescription").val(),
+                            SchoolCategoryId: $("#SchoolCategoryId").val()
+                        }
+
+                        let UrlApi = '/api/Schools'
+                        
+                        $.ajax({
+                            type: "Post",
+                            url: UrlApi,
+                            data: JSON.stringify(RequestCls),
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            success: function (response) {
+                                
+                                $("#datatable").dataTable().fnDestroy();
+                                loadSchools();
+
+                                
+                            },
+                            error: function (xhr) {
+
+                            }
+                        });
+
+
+
+
+
+
+                    }
+                }
+                
+            )
+
+        });
+        
+
+
+
+    </script>
+
+
+
+
+
+
+    <script type="text/javascript">
+
+        loadSchools();
+
+        function loadSchools() {
+
+        $("#datatable").DataTable(
+            {
+                ajax: {
+                    url: "/api/schools",
+                    type: "get",
+                    datatype: "json"
+                },
+                columns: [
+                    {
+                        data: "Name", name: "Name", width: "50%", className: "bg-danger", render: function (value) {
+                            let template = `<button class="btn btn-primary">${value}</button>`
+
+                            return template;
+                        }
+                    },
+                    {
+                        data: "Description", name: "Description", width: "30%"
+                    },
+                    {
+                        data: "Departments", name: "Departments", autowidth: true, render: function (deps) {
+                            let template = `
+                                                    <ul>
+                                                        ${deps.map(x => '<li>' + x.Name + '</li>').join('')}
+                                                    </ul>
+                                                `
+                            return template;
+                        }
+                    },
+                    {
+                        data: "SchoolCategory", name: "SchoolCategory", width: "40%", render: function (cat) {
+                            let template = `
+                                                    ${cat.Name}
+                                                `
+                            return template;
+                        }
+                    }
+
+                ],
+                processing: true,
+                filters: true,
+
+                language: {
+                    processing: `<div class="spinner-border text-dark" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>`,
+                    emptyTable: "Den iparxoun data",
+                    zeroRecords: "Den iparxoun schools",
+                    infoFiltered: " - Total number of Schools: _MAX_",
+                    paginate: { first: "Mprosta", last: "Piso", next: "Epomeno", previous: "Proigoumeno" }
+                },
+                serverSide: false
+
+            }
+
+
+
+
+
+
+
+            );
+
+
+        }
+
+    </script>
+
+
+
+
+} 
