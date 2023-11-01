@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Web.Http.Description;
 using AdvancedBootcamp1.Models;
+using AdvancedBootcamp1.Models.Dtos;
 using AdvancedBootcamp1.MyDatabase;
 
 namespace AdvancedBootcamp1.Controllers.ApiControllers
@@ -84,25 +85,41 @@ namespace AdvancedBootcamp1.Controllers.ApiControllers
         }
 
         // POST: api/Schools
-        [ResponseType(typeof(School))]
-        public IHttpActionResult PostSchool(School school)
+        [ResponseType(typeof(SchoolDTO))]
+        public IHttpActionResult PostSchool(SchoolDTO schoolDTO)
         {
-            if (!ModelState.IsValid)
+            //Mapping
+            School school = new School();
+
+            school.Name = schoolDTO.Name;
+            school.Description = schoolDTO.Description;
+            school.SchoolCategoryId = schoolDTO.CatId;
+
+            List<Department> departments = new List<Department>();
+            foreach (var id in schoolDTO.DepsId)
             {
-                return BadRequest(ModelState);
+               var dep = db.Departments.Find(id);
+                departments.Add(dep);
             }
 
-            db.Schools.Add(school);
+            school.Departments = departments;
+
+            db.Entry(school).State = EntityState.Added;
             db.SaveChanges();
 
-            return CreatedAtRoute("DefaultApi", new { id = school.SchoolId }, school);
+            return Json(schoolDTO);
         }
 
         // DELETE: api/Schools/5
         [ResponseType(typeof(School))]
         public IHttpActionResult DeleteSchool(int id)
         {
-            School school = db.Schools.Find(id);
+            var school = db.Schools
+                       .Where(s => s.SchoolId == id)
+                       .Include(s => s.Departments)
+                       .FirstOrDefault();
+
+            //school.Departments = null;
             if (school == null)
             {
                 return NotFound();
